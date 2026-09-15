@@ -133,7 +133,7 @@ src/
 │   │   │   └── patientService.ts     # Patients API service (no delete endpoints)
 │   │   └── index.ts                  # Patients feature export
 │   │
-│   ├── appointments/                 # Appointments and scheduling (admin and secretary only, custom recurrence)
+│   ├── appointments/                 # Appointments and scheduling (admin/secretary manage; psychologist can only view own appointments, custom recurrence)
 │   │   ├── pages/
 │   │   │   └── SchedulerPage.tsx           # Custom scheduler view with recurrence support
 │   │   ├── components/

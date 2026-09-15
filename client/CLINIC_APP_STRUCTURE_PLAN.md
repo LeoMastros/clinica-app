@@ -29,7 +29,7 @@ src/
 │   ├── MainLayout.tsx                # Main layout with responsive sidebar
 │   ├── AuthLayout.tsx                # Authentication layout (login/signup)
 │   ├── AppBar.tsx                    # Top navigation bar with hamburger menu on mobile
-│   ├── Sidebar.tsx                   # Side navigation with role-based menu items
+│   ├── Sidebar.tsx                   # Side navigation with role-based menu items (see Sidebar Navigation Items)
 │   ├── MobileDrawer.tsx              # Mobile drawer for sidebar (hamburger menu)
 │   ├── Footer.tsx                    # Footer component
 │   └── index.ts                      # Layout exports
@@ -303,6 +303,24 @@ src/
     └── fonts/                        # Custom fonts
 ```
 
+## Sidebar Navigation Items
+
+The sidebar exposes exactly these items, in this order (labels in PT-BR):
+
+| # | Label | Route | Feature module | Visible to |
+|---|-------|-------|----------------|------------|
+| 1 | Agendamentos | `/agendamentos` | `features/appointments` | admin, secretary, psychologist (view only) |
+| 2 | Triagem | `/triagem` | `features/triage` | admin, psychologist |
+| 3 | Anamnese | `/anamnese` | `features/anamnesis` | admin, psychologist |
+| 4 | Sessões | `/sessoes` | `features/sessions` | admin, psychologist, secretary (view only) |
+| 5 | Laudos | `/laudos` | `features/reports` | admin, psychologist (own patients), secretary (limited) |
+| 6 | Pacientes | `/pacientes` | `features/patients` | admin, secretary, psychologist (assigned patients only) |
+| 7 | Gestão de Usuários | `/usuarios` | `features/users` | admin |
+
+- Item visibility is resolved through the centralized permissions hook (`usePermissions().can()`), never with inline role checks.
+- Labels are PT-BR string constants; routes live in `constants/routes.ts` and the item list in `layout/Sidebar.tsx`.
+- The same list drives `layout/MobileDrawer.tsx` so desktop and mobile navigation stay in sync.
+
 ## Implementation Plan
 
 ### Phase 1: Core Structure Setup
@@ -340,7 +358,7 @@ src/
 2. Implement responsive sidebar with hamburger menu for mobile
 3. Set up routing configuration with role-based route access (using centralized permissions)
 4. Implement route guards (auth, role-based permissions using centralized system)
-5. Connect navigation to layout (role-based menu items using centralized permissions)
+5. Connect navigation to layout (role-based menu items using centralized permissions, per Sidebar Navigation Items)
 6. Set up React Context for global state management
 
 ### Phase 5: Integration

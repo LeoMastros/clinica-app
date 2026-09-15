@@ -49,6 +49,7 @@ export function AppBar({ onOpenMenu, title }: AppBarProps) {
             <Chip
               label={`${user.name} · ${ROLE_LABELS[user.role]}`}
               size="small"
+              sx={{ display: { xs: 'none', sm: 'flex' } }}
             />
             <Button onClick={logout} startIcon={<LogoutIcon />} size="small">
               Sair

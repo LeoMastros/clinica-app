@@ -4,7 +4,7 @@ import { Navigate, createBrowserRouter } from 'react-router-dom';
 import { ROUTES } from '../constants/routes';
 import { AnamnesisListPage } from '../features/anamnesis';
 import { SchedulerPage } from '../features/appointments';
-import { LoginPage } from '../features/auth';
+import { LoginPage, SignupPage } from '../features/auth';
 import { PatientListPage } from '../features/patients';
 import { ReportsDashboardPage } from '../features/reports';
 import { SessionListPage } from '../features/sessions';
@@ -24,7 +24,10 @@ function protectedRoute(resource: Resource, element: ReactElement) {
 export const router = createBrowserRouter([
   {
     element: <AuthLayout />,
-    children: [{ path: ROUTES.login, element: <LoginPage /> }],
+    children: [
+      { path: ROUTES.login, element: <LoginPage /> },
+      { path: ROUTES.signup, element: <SignupPage /> },
+    ],
   },
   {
     element: (

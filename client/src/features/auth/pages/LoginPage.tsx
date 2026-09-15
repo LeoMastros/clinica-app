@@ -10,8 +10,8 @@ export function LoginPage() {
 
   return (
     <AuthCard
-      title="Entrar"
-      subtitle="Acesse o sistema da clínica de psicologia"
+      title="Entrar no PsiUnisantos"
+      subtitle="Acesse a gestão da clínica escola de psicologia"
     >
       <LoginForm />
     </AuthCard>

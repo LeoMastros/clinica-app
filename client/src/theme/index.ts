@@ -11,10 +11,10 @@ export const theme = createTheme({
   typography,
   breakpoints,
   spacing: spacingUnit,
-  shape: { borderRadius: 8 },
+  shape: { borderRadius: 10 },
   components,
 });
 
-export { colors } from './colors';
+export { colors, gradients, unisantos } from './colors';
 export { layoutSizes } from './spacing';
 export default theme;

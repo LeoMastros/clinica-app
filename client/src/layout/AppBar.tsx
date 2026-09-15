@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 
 import { ROLE_LABELS } from '../constants/roles';
 import { useAuth } from '../core/auth';
+import { gradients } from '../theme';
 import { layoutSizes } from '../theme/spacing';
 
 export interface AppBarProps {
@@ -28,6 +29,7 @@ export function AppBar({ onOpenMenu, title }: AppBarProps) {
       sx={{
         borderBottom: 1,
         borderColor: 'divider',
+        background: gradients.appBar,
         width: { md: `calc(100% - ${layoutSizes.sidebarWidth}px)` },
         ml: { md: `${layoutSizes.sidebarWidth}px` },
       }}
@@ -41,7 +43,12 @@ export function AppBar({ onOpenMenu, title }: AppBarProps) {
         >
           <MenuIcon />
         </IconButton>
-        <Typography variant="h6" component="h1" noWrap sx={{ flexGrow: 1 }}>
+        <Typography
+          variant="h6"
+          component="h1"
+          noWrap
+          sx={{ flexGrow: 1, fontWeight: 700, color: 'secondary.main' }}
+        >
           {title}
         </Typography>
         {user && (

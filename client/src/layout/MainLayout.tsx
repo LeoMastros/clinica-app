@@ -36,6 +36,7 @@ export function MainLayout() {
           '& .MuiDrawer-paper': {
             width: layoutSizes.sidebarWidth,
             boxSizing: 'border-box',
+            border: 'none',
           },
         }}
         open

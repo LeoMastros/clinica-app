@@ -1,25 +1,29 @@
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import Alert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 
-import { useAuth } from '../../../core/auth';
-import { isValidEmail } from '../../../core/utils/validators';
-
-interface LoginFormValues {
-  email: string;
-  password: string;
-}
+import { FormField, PasswordField } from '../../../shared/molecules';
+import { useLogin } from '../hooks/useLogin';
+import { loginSchema } from '../schemas';
+import type { LoginFormValues } from '../schemas';
 
 export function LoginForm() {
-  const { login, isLoading } = useAuth();
+  const { login, isLoading } = useLogin();
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormValues>({ defaultValues: { email: '', password: '' } });
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+    mode: 'onTouched',
+    reValidateMode: 'onChange',
+  });
 
   return (
     <Stack
@@ -27,37 +31,56 @@ export function LoginForm() {
       spacing={2}
       onSubmit={handleSubmit(values => login(values))}
       noValidate
+      aria-label="Formulário de acesso"
     >
-      <Alert severity="info">
+      <Alert severity="info" variant="outlined">
+        <AlertTitle>Ambiente de demonstração</AlertTitle>
         Autenticação simulada: use admin@, psicologo@ ou secretaria@ para entrar
         com cada perfil.
       </Alert>
-      <TextField
-        label="E-mail"
-        type="email"
-        autoComplete="email"
-        error={Boolean(errors.email)}
-        helperText={errors.email?.message}
-        {...register('email', {
-          required: 'Informe o e-mail',
-          validate: value => isValidEmail(value) || 'E-mail inválido',
-        })}
+
+      <Controller
+        name="email"
+        control={control}
+        render={({ field }) => (
+          <FormField
+            {...field}
+            label="E-mail institucional"
+            type="email"
+            autoComplete="email"
+            autoFocus
+            required
+            hint="Use o e-mail cadastrado na clínica."
+            errorMessage={errors.email?.message}
+          />
+        )}
       />
-      <TextField
-        label="Senha"
-        type="password"
-        autoComplete="current-password"
-        error={Boolean(errors.password)}
-        helperText={errors.password?.message}
-        {...register('password', { required: 'Informe a senha' })}
+
+      <Controller
+        name="password"
+        control={control}
+        render={({ field }) => (
+          <PasswordField
+            {...field}
+            label="Senha"
+            autoComplete="current-password"
+            required
+            hint="Mínimo de 8 caracteres."
+            errorMessage={errors.password?.message}
+          />
+        )}
       />
+
       <Button
         type="submit"
         variant="contained"
         size="large"
         disabled={isLoading}
+        startIcon={
+          isLoading ? <CircularProgress size={18} color="inherit" /> : undefined
+        }
       >
-        Entrar
+        {isLoading ? 'Entrando…' : 'Entrar'}
       </Button>
     </Stack>
   );

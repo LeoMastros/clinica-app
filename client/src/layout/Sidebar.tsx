@@ -19,6 +19,7 @@ import Typography from '@mui/material/Typography';
 import { ROUTES } from '../constants/routes';
 import { APP_NAME } from '../core/utils/constants';
 import { usePermissions } from '../hooks/usePermissions';
+import { gradients } from '../theme';
 import type { Resource } from '../types/permissions';
 
 export interface NavItem {
@@ -83,10 +84,14 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     <Box
       component="nav"
       aria-label="Navegação principal"
-      sx={{ height: '100%' }}
+      sx={{
+        height: '100%',
+        background: gradients.sidebar,
+        color: 'common.white',
+      }}
     >
       <Toolbar sx={{ px: 2 }}>
-        <Typography variant="h6" noWrap>
+        <Typography variant="h6" noWrap sx={{ fontWeight: 700 }}>
           {APP_NAME}
         </Typography>
       </Toolbar>
@@ -98,9 +103,18 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             to={path}
             selected={pathname.startsWith(path)}
             onClick={onNavigate}
-            sx={{ mb: 0.5 }}
+            sx={{
+              mb: 0.5,
+              color: 'rgba(255, 255, 255, 0.86)',
+              '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.10)' },
+              '&.Mui-selected': {
+                bgcolor: 'rgba(255, 255, 255, 0.18)',
+                color: 'common.white',
+                '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.24)' },
+              },
+            }}
           >
-            <ListItemIcon sx={{ minWidth: 40 }}>
+            <ListItemIcon sx={{ minWidth: 40, color: 'inherit' }}>
               <Icon fontSize="small" />
             </ListItemIcon>
             <ListItemText primary={label} />

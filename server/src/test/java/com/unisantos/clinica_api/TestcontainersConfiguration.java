@@ -12,7 +12,9 @@ public class TestcontainersConfiguration {
 	@Bean
 	@ServiceConnection
 	MySQLContainer mysqlContainer() {
-		return new MySQLContainer(DockerImageName.parse("mysql:latest"));
+		// Mesma versao do docker-compose.yml: testar contra uma versao diferente
+		// da que roda em producao esconde diferenca de comportamento do MySQL.
+		return new MySQLContainer(DockerImageName.parse("mysql:8.4"));
 	}
 
 }

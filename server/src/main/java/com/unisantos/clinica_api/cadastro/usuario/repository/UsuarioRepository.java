@@ -8,8 +8,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 /**
  * Acesso a tabela {@code usuario}.
  *
- * <p>Sem nenhum metodo de exclusao: a remocao de usuario e proibida pela regra
- * de retencao do projeto. Desligamento e {@code ativo = false}.
+ * <p>Usuario nunca e removido: desligamento e {@code ativo = false}, pela regra
+ * de retencao do CFP/CRP. Os metodos {@code delete} herdados de
+ * {@link JpaRepository} existem por heranca, mas nao devem ser chamados por
+ * nenhum service ou controller — o uso deles fica restrito a preparacao de
+ * cenario em teste. Nenhuma rota da API expoe exclusao.
  */
 public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 

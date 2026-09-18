@@ -13,7 +13,7 @@ import { loginSchema } from '../schemas';
 import type { LoginFormValues } from '../schemas';
 
 export function LoginForm() {
-  const { login, isLoading } = useLogin();
+  const { login, isLoading, error } = useLogin();
   const {
     control,
     handleSubmit,
@@ -33,11 +33,12 @@ export function LoginForm() {
       noValidate
       aria-label="Formulário de acesso"
     >
-      <Alert severity="info" variant="outlined">
-        <AlertTitle>Ambiente de demonstração</AlertTitle>
-        Autenticação simulada: use admin@, psicologo@ ou secretaria@ para entrar
-        com cada perfil.
-      </Alert>
+      {error ? (
+        <Alert severity="error" variant="outlined" role="alert">
+          <AlertTitle>Não foi possível entrar</AlertTitle>
+          {error}
+        </Alert>
+      ) : null}
 
       <Controller
         name="email"

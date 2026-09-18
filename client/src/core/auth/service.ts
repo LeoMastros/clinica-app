@@ -1,21 +1,44 @@
 import type { User } from '../../types/user';
-import type { Credentials } from './types';
+import { apiClient } from '../api/client';
+import { ENDPOINTS } from '../api/endpoints';
+import { clearToken, readToken, storeToken } from '../api/interceptors';
+import type { AuthResponse, Credentials } from './types';
 
-export async function login(_credentials: Credentials): Promise<User> {
-  // TODO: POST ENDPOINTS.auth.login through apiClient with the credentials
-  // TODO: Store the returned token under AUTH_TOKEN_STORAGE_KEY
-  // TODO: Return the authenticated user profile
-  // NO FUNCTIONAL CODE - Implementation guide only
-  throw new Error('not implemented');
+/**
+ * Autentica e guarda o token para as próximas requisições.
+ *
+ * <p>Erros sobem como `ApiError`, já traduzidos pelo interceptador — o
+ * formulário mostra a mensagem como veio do servidor.
+ */
+export async function login(credentials: Credentials): Promise<User> {
+  const { data } = await apiClient.post<AuthResponse>(
+    ENDPOINTS.auth.login,
+    credentials
+  );
+  storeToken(data.token);
+  return data.user;
 }
 
 export async function logout(): Promise<void> {
-  // TODO: Clear AUTH_TOKEN_STORAGE_KEY and any cached crypto keys
-  // NO FUNCTIONAL CODE - Implementation guide only
+  clearToken();
 }
 
+/**
+ * Recupera o perfil de quem está com a sessão aberta, usado para reidratar o
+ * estado quando a página é recarregada.
+ *
+ * <p>Devolve `null` em vez de lançar quando não há sessão válida: para quem
+ * chama, "não está logado" é uma resposta esperada, não um erro. Um token
+ * recusado é descartado aqui mesmo, para não ficar tentando a cada recarga.
+ */
 export async function getCurrentUser(): Promise<User | null> {
-  // TODO: GET ENDPOINTS.auth.me and map the payload to User
-  // NO FUNCTIONAL CODE - Implementation guide only
-  return null;
+  if (!readToken()) return null;
+
+  try {
+    const { data } = await apiClient.get<User>(ENDPOINTS.auth.me);
+    return data;
+  } catch {
+    clearToken();
+    return null;
+  }
 }

@@ -1,5 +1,6 @@
 package com.unisantos.clinica_api.common.config;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -44,12 +45,14 @@ class CorsConfigTest {
     @Test
     void oCabecalhoDeAutorizacaoEhAceitoNoPreflight() throws Exception {
         // Sem isto o /auth/me nao conseguiria mandar o token pelo navegador.
+        // O Spring ecoa de volta apenas os cabecalhos que foram pedidos, e nao
+        // a lista inteira de permitidos, entao a assercao olha so o que importa.
         mockMvc.perform(options("/auth/me")
                         .header("Origin", ORIGEM_DO_FRONT)
                         .header("Access-Control-Request-Method", "GET")
                         .header("Access-Control-Request-Headers", "authorization"))
                 .andExpect(status().isOk())
-                .andExpect(header().stringValues("Access-Control-Allow-Headers", "Authorization, Content-Type"));
+                .andExpect(header().string("Access-Control-Allow-Headers", containsString("Authorization")));
     }
 
     @Test

@@ -19,20 +19,3 @@ const password = z
 export const loginSchema = z.object({ email, password });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
-
-export const signupSchema = z
-  .object({
-    name: z
-      .string()
-      .trim()
-      .min(3, 'Informe o nome completo com ao menos 3 caracteres'),
-    email,
-    password: password.regex(/[0-9]/, 'A senha deve conter ao menos um número'),
-    passwordConfirmation: z.string().min(1, 'Confirme a senha'),
-  })
-  .refine(values => values.password === values.passwordConfirmation, {
-    path: ['passwordConfirmation'],
-    message: 'As senhas não conferem',
-  });
-
-export type SignupFormValues = z.infer<typeof signupSchema>;

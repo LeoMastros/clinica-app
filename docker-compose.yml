@@ -21,6 +21,18 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      # O Compose so injeta no container o que esta declarado aqui. Sem estas
+      # linhas, por o valor no .env nao surte efeito nenhum.
+      # Os padroes espelham os da aplicacao: quem nao definir nada continua com
+      # o comportamento de desenvolvimento, em vez de receber valor vazio.
+      CLINICA_JWT_SEGREDO: ${CLINICA_JWT_SEGREDO:-troque-este-segredo-apenas-para-desenvolvimento-local}
+      CLINICA_JWT_VALIDADE: ${CLINICA_JWT_VALIDADE:-PT8H}
+      CLINICA_CORS_ORIGENS: ${CLINICA_CORS_ORIGENS:-http://localhost:3000,http://localhost:5173}
+      # Vazio de proposito quando nao definido: e assim que o AdminInicial sabe
+      # que nao deve criar conta nenhuma.
+      CLINICA_ADMIN_INICIAL_NOME: ${CLINICA_ADMIN_INICIAL_NOME:-Administrador}
+      CLINICA_ADMIN_INICIAL_EMAIL: ${CLINICA_ADMIN_INICIAL_EMAIL:-}
+      CLINICA_ADMIN_INICIAL_SENHA: ${CLINICA_ADMIN_INICIAL_SENHA:-}
     depends_on:
       mysql:
         condition: service_healthy

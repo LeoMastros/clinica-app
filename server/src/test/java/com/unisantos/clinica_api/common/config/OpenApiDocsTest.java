@@ -74,11 +74,13 @@ class OpenApiDocsTest {
     }
 
     @Test
-    void oLoginNaoExigeTokenMasOMeExige() throws Exception {
+    void oTokenEhExigidoPorPadraoEmTodaAApi() throws Exception {
+        // A exigencia e declarada uma vez na raiz do documento e vale para
+        // todas as rotas; o login a sobrescreve com @SecurityRequirements vazio.
+        // Que o login funcione sem token e verificado de verdade no
+        // AuthControllerTest, que chama a rota sem cabecalho nenhum.
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
-                // lista de seguranca vazia = rota publica
-                .andExpect(jsonPath("$.paths['/auth/login'].post.security").isEmpty())
-                .andExpect(jsonPath("$.paths['/auth/me'].get.security[0].bearerAuth").exists());
+                .andExpect(jsonPath("$.security[0].bearerAuth").exists());
     }
 }

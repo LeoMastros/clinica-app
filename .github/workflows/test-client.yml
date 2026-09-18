@@ -1,0 +1,45 @@
+name: Test Client
+
+# Segunda metade do que o README descreve: a pipeline do client, acionada
+# apenas quando algo em /client muda. Assim, alterar uma migration no servidor
+# nao gasta runner reinstalando dependencia de front, e vice-versa — o
+# test.yml cuida do servidor com o mesmo criterio.
+
+on:
+  pull_request:
+    paths:
+      - 'client/**'
+      - '.github/workflows/test-client.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'client/**'
+  workflow_dispatch:
+
+jobs:
+  client:
+    name: Client (Vitest)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # O projeto versiona bun.lock, entao instalar com bun mantem as mesmas
+      # versoes que rodam na maquina de quem desenvolve.
+      - name: Configura o Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Instala as dependencias
+        working-directory: client
+        run: bun install --frozen-lockfile
+
+      - name: Roda os testes
+        working-directory: client
+        run: bun run test:ci
+
+      # Teste passando com tipo quebrado ainda quebra o build de producao,
+      # entao a checagem de tipos entra junto.
+      - name: Confere os tipos
+        working-directory: client
+        run: bunx tsc -b --noEmit

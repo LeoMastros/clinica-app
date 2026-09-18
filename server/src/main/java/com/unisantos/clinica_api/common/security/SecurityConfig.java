@@ -45,6 +45,9 @@ public class SecurityConfig {
                 // Nao ha cookie de sessao para proteger: o token vai no cabecalho,
                 // entao CSRF nao se aplica.
                 .csrf(csrf -> csrf.disable())
+                // Usa o CorsConfigurationSource de common/config. Sem isto o
+                // preflight do navegador e barrado antes de chegar no controller.
+                .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(rotas -> rotas
                         .requestMatchers("/auth/login").permitAll()

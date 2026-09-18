@@ -6,7 +6,15 @@ import com.unisantos.clinica_api.cadastro.usuario.dto.UsuarioResponse;
 import com.unisantos.clinica_api.cadastro.usuario.entity.Usuario;
 import com.unisantos.clinica_api.cadastro.usuario.repository.UsuarioRepository;
 import com.unisantos.clinica_api.common.security.TokenService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "Autenticacao", description = "Entrada no sistema e perfil do usuario autenticado.")
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
@@ -50,6 +59,30 @@ public class AuthController {
      * existencia do e-mail a quem esta tentando adivinhar.
      */
     @PostMapping("/login")
+    @SecurityRequirements // rota publica: nao exige o token do "Authorize"
+    @Operation(
+            summary = "Autentica e devolve o token",
+            description =
+                    """
+                    Recebe e-mail e senha e devolve um JWT junto do perfil do usuario.
+
+                    Guarde o campo `token` e envie-o no cabecalho `Authorization` \
+                    no formato `Bearer <token>` nas demais rotas. A validade padrao \
+                    e de 8 horas.
+
+                    Usuario inativo nao consegue entrar.""")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Credenciais validas. Devolve o token e o perfil."),
+        @ApiResponse(
+                responseCode = "400",
+                description = "Corpo invalido, por exemplo e-mail fora do formato ou campo vazio.",
+                content = @Content(schema = @Schema(implementation = ProblemDetail.class))),
+        @ApiResponse(
+                responseCode = "401",
+                description =
+                        "E-mail ou senha invalidos, ou conta desligada. A mensagem e a mesma nos dois casos, de proposito, para nao revelar se o e-mail existe.",
+                content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    })
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest requisicao) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(requisicao.email(), requisicao.password()));
@@ -62,6 +95,21 @@ public class AuthController {
 
     /** Perfil do usuario dono do token, usado pelo client para reidratar a sessao. */
     @GetMapping("/me")
+    @Operation(
+            summary = "Devolve o perfil do dono do token",
+            description =
+                    """
+                    Usada pelo client para reidratar a sessao quando a pagina e \
+                    recarregada e o token ainda esta guardado no navegador.
+
+                    Exige o cabecalho `Authorization: Bearer <token>`.""")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Token valido. Devolve o perfil."),
+        @ApiResponse(
+                responseCode = "401",
+                description = "Token ausente, invalido ou expirado.",
+                content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    })
     public ResponseEntity<UsuarioResponse> eu(@AuthenticationPrincipal Jwt token) {
         Usuario usuario = repository.findByEmailIgnoreCase(token.getSubject()).orElseThrow();
         return ResponseEntity.ok(UsuarioResponse.de(usuario));

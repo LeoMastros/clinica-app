@@ -49,7 +49,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(rotas -> rotas
                         .requestMatchers("/auth/login").permitAll()
                         .requestMatchers("/actuator/health/**").permitAll()
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        // A documentacao fica aberta para quem for consumir a API
+                        // conseguir ler os campos sem precisar de conta.
+                        .requestMatchers(
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs.yaml",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html")
+                        .permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()));
         return http.build();

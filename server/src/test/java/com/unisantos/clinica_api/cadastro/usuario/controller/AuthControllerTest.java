@@ -38,8 +38,10 @@ class AuthControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    // Instanciado direto, e nao injetado: no Spring Boot 4 o contexto nao expoe
+    // um bean de ObjectMapper, e aqui ele serve so para montar e ler JSON no
+    // teste — nao precisa ser o mesmo que a aplicacao usa para serializar.
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     private UsuarioRepository repository;

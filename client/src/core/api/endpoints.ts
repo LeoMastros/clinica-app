@@ -1,5 +1,7 @@
 export const ENDPOINTS = {
-  auth: { login: '/auth/login', signup: '/auth/signup', me: '/auth/me' },
+  // Nao existe cadastro publico: quem cria usuario e o administrador, pela
+  // tela de gestao de usuarios.
+  auth: { login: '/auth/login', me: '/auth/me' },
   users: {
     root: '/users',
     byId: (id: string) => `/users/${id}`,

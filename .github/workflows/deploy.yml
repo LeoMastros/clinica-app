@@ -32,5 +32,28 @@ jobs:
             # can't diverge (discards any stray local commits on the box).
             git fetch origin main
             git reset --hard origin/main
+
+            # Pre-deploy DB snapshot — migrations run on boot, and a bad one
+            # shouldn't cost real data. Failure here never blocks a deploy
+            # (e.g. mysql not up yet on first boot).
+            set -a && . ./.env && set +a
+            mkdir -p ~/clinica-backups
+            docker compose exec -T mysql \
+              mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" --single-transaction clinica_db \
+              > ~/clinica-backups/clinica_db-$(date +%F-%H%M).sql 2>/dev/null || true
+
             docker compose up --build -d
             docker image prune -f
+
+            # Health gate: a crash-looping backend must fail the job, not
+            # silently pass. ~6 min budget for boot + flyway migrations.
+            for i in $(seq 1 36); do
+              if curl -sf http://localhost:8080/actuator/health | grep -q '"UP"'; then
+                echo "Backend healthy after ~$((i * 10))s"
+                exit 0
+              fi
+              sleep 10
+            done
+            echo "Backend never became healthy — recent logs:"
+            docker compose logs server --tail=40
+            exit 1

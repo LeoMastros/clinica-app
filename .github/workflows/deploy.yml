@@ -26,7 +26,11 @@ jobs:
           key: ${{ secrets.ORACLE_SSH_KEY }}
           port: ${{ secrets.ORACLE_SSH_PORT }}
           script: |
+            set -e  # any failure aborts the deploy and fails the job
             cd ~/clinica-app
-            git pull origin main
+            # Deploy VMs don't merge — fetch + hard reset is deterministic and
+            # can't diverge (discards any stray local commits on the box).
+            git fetch origin main
+            git reset --hard origin/main
             docker compose up --build -d
             docker image prune -f

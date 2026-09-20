@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+    <!-- Tier 3 packages contain only empty class shells with no method bodies. -->
+    <!-- Remove a package's entry here once that feature is actually implemented. -->
+    <suppress checks="JavadocMethod" files="(professional|appointment|session|triage|anamnesis|report|cryptography|audit|user)/.*\.java"/>
+    <suppress checks="JavadocVariable" files="(professional|appointment|session|triage|anamnesis|report|cryptography|audit|user)/.*\.java"/>
+
+    <!-- Test sources legitimately use literal test data and compact annotation style. -->
+    <suppress checks="MagicNumber" files=".*src[\\/]test[\\/]java.*\.java"/>
+    <suppress checks="AnnotationLocation" files=".*src[\\/]test[\\/]java.*\.java"/>
+    <suppress checks="JavadocMethod" files=".*src[\\/]test[\\/]java.*\.java"/>
+    <suppress checks="JavadocType" files=".*src[\\/]test[\\/]java.*\.java"/>
+</suppressions>

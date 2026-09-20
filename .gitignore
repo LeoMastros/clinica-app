@@ -55,3 +55,14 @@ tmp/
 .env.test.local
 .env.production.local
 *.pem
+.aider*
+
+# ==========================================
+# 6. E2E artifacts — record them per run and
+# attach the interesting ones to PRs, but
+# never commit them.
+# ==========================================
+demo-video/
+client/e2e/test-results/
+client/e2e/playwright-report/
+client/test-results/

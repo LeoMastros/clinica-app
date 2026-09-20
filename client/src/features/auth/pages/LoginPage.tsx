@@ -5,7 +5,11 @@ import { AuthCard } from '../components/AuthCard';
 import { LoginForm } from '../components/LoginForm';
 
 export function LoginPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isRestoring } = useAuth();
+  // While the session is being restored from the refresh cookie, render
+  // nothing — an authenticated user is bounced to '/' and must never see
+  // the login form flash.
+  if (isRestoring) return null;
   if (isAuthenticated) return <Navigate to="/" replace />;
 
   return (

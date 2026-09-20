@@ -7,8 +7,11 @@ import { usePermissions } from '../hooks/usePermissions';
 import type { Resource } from '../types/permissions';
 
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isRestoring } = useAuth();
   const location = useLocation();
+
+  // Wait for the session-restore attempt before deciding.
+  if (isRestoring) return null;
 
   if (!isAuthenticated) {
     return (

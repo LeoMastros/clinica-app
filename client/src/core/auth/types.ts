@@ -8,7 +8,10 @@ export interface Credentials {
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
+  /** A request is in flight (login, or the initial session restore). */
   isLoading: boolean;
+  /** True only while the boot-time session restore is unresolved. */
+  isRestoring: boolean;
 }
 
 export interface AuthContextValue extends AuthState {

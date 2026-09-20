@@ -3,6 +3,7 @@ agent: devin-local
 session: jealous-comma
 created: 2026-09-14T18:52:52Z
 ---
+
 # Clinic App Folder Structure Plan
 
 Create comprehensive folder structure for Vite + Material UI clinic app with FULLY FUNCTIONAL theme/layout/routing/centralized permissions, React Query + Context for state management, E2E client-side encryption (elliptic curve + enveloping, admin-only key generation), custom appointment recurrence using react-day-picker, hybrid appointment-session relationship, and EMPTY FUNCTION STUBS with domain-specific TODO comments for all other modules.
@@ -307,15 +308,15 @@ src/
 
 The sidebar exposes exactly these items, in this order (labels in PT-BR):
 
-| # | Label | Route | Feature module | Visible to |
-|---|-------|-------|----------------|------------|
-| 1 | Agendamentos | `/agendamentos` | `features/appointments` | admin, secretary, psychologist (view only) |
-| 2 | Triagem | `/triagem` | `features/triage` | admin, psychologist |
-| 3 | Anamnese | `/anamnese` | `features/anamnesis` | admin, psychologist |
-| 4 | Sessões | `/sessoes` | `features/sessions` | admin, psychologist, secretary (view only) |
-| 5 | Laudos | `/laudos` | `features/reports` | admin, psychologist (own patients), secretary (limited) |
-| 6 | Pacientes | `/pacientes` | `features/patients` | admin, secretary, psychologist (assigned patients only) |
-| 7 | Gestão de Usuários | `/usuarios` | `features/users` | admin |
+| #   | Label              | Route           | Feature module          | Visible to                                              |
+| --- | ------------------ | --------------- | ----------------------- | ------------------------------------------------------- |
+| 1   | Agendamentos       | `/agendamentos` | `features/appointments` | admin, secretary, psychologist (view only)              |
+| 2   | Triagem            | `/triagem`      | `features/triage`       | admin, psychologist                                     |
+| 3   | Anamnese           | `/anamnese`     | `features/anamnesis`    | admin, psychologist                                     |
+| 4   | Sessões            | `/sessoes`      | `features/sessions`     | admin, psychologist, secretary (view only)              |
+| 5   | Laudos             | `/laudos`       | `features/reports`      | admin, psychologist (own patients), secretary (limited) |
+| 6   | Pacientes          | `/pacientes`    | `features/patients`     | admin, secretary, psychologist (assigned patients only) |
+| 7   | Gestão de Usuários | `/usuarios`     | `features/users`        | admin                                                   |
 
 - Item visibility is resolved through the centralized permissions hook (`usePermissions().can()`), never with inline role checks.
 - Labels are PT-BR string constants; routes live in `constants/routes.ts` and the item list in `layout/Sidebar.tsx`.
@@ -324,6 +325,7 @@ The sidebar exposes exactly these items, in this order (labels in PT-BR):
 ## Implementation Plan
 
 ### Phase 1: Core Structure Setup
+
 1. Create the complete folder structure
 2. Set up theme configuration files (FULLY FUNCTIONAL)
 3. Create centralized permissions system (FULLY FUNCTIONAL)
@@ -336,6 +338,7 @@ The sidebar exposes exactly these items, in this order (labels in PT-BR):
 10. Install additional dependencies: react-hook-form, @hookform/resolvers, date-fns, crypto libraries, @tanstack/react-query, react-day-picker
 
 ### Phase 2: Shared Components (Atomic Design)
+
 1. Define interface contracts for shared organisms (DataTable, FormWizard) BEFORE feature work begins
 2. Create molecule components with empty function stubs and implementation comments
 3. Create organism components with empty function stubs and implementation comments
@@ -344,6 +347,7 @@ The sidebar exposes exactly these items, in this order (labels in PT-BR):
 6. Create React Hook Form integration components with empty function stubs and implementation comments
 
 ### Phase 3: Feature Modules (EMPTY FUNCTION STUBS with implementation guidance)
+
 1. Create authentication feature with empty function stubs and implementation comments
 2. Create users management feature with empty function stubs and implementation comments
 3. Create patients management feature with empty function stubs and implementation comments
@@ -354,6 +358,7 @@ The sidebar exposes exactly these items, in this order (labels in PT-BR):
 8. Create reports feature with empty function stubs and implementation comments
 
 ### Phase 4: Layout and Routing (FULLY FUNCTIONAL)
+
 1. Create layout components (MainLayout with responsive sidebar, AuthLayout)
 2. Implement responsive sidebar with hamburger menu for mobile
 3. Set up routing configuration with role-based route access (using centralized permissions)
@@ -362,6 +367,7 @@ The sidebar exposes exactly these items, in this order (labels in PT-BR):
 6. Set up React Context for global state management
 
 ### Phase 5: Integration
+
 1. Update App.tsx with routing and providers (FULLY FUNCTIONAL)
 2. Update main.tsx if needed (FULLY FUNCTIONAL)
 3. Ensure responsiveness across layout components
@@ -370,6 +376,7 @@ The sidebar exposes exactly these items, in this order (labels in PT-BR):
 ## File Contents Strategy
 
 ### Fully Functional Files (Theme, Layout, Routing, Centralized Permissions, React Query, Mock Auth, ErrorBoundary)
+
 - Complete, working implementation
 - No TODO comments
 - Ready for immediate use
@@ -384,7 +391,9 @@ The sidebar exposes exactly these items, in this order (labels in PT-BR):
 - Error boundary for React error handling
 
 ### TODO-Guided Boilerplate Files (All other modules)
+
 Each boilerplate file will include:
+
 - **File header comment block**: Main purpose and implementation logic
 - TypeScript interface/type definitions
 - **Empty function stubs only** - NO functional code
@@ -404,6 +413,7 @@ Each boilerplate file will include:
 ### Domain-Specific TODO Examples:
 
 **Session Cancellation (with business rules):**
+
 ```typescript
 export function cancelSession(sessionId: string): void {
   // TODO: Verify currentUser.role === 'psychologist' AND session.psychologistId === currentUser.id
@@ -423,8 +433,12 @@ export function cancelSession(sessionId: string): void {
 ```
 
 **Patient Psychologist Assignment (with field-level permissions):**
+
 ```typescript
-export function assignPsychologist(patientId: string, psychologistId: string): void {
+export function assignPsychologist(
+  patientId: string,
+  psychologistId: string
+): void {
   // TODO: Check centralized permission: canAssignPsychologist(currentUser.role)
   //       (Business Rule: Only admin can assign psychologists - see User and Role Management)
   // TODO: Verify psychologist doesn't exceed patient capacity (if applicable)
@@ -440,6 +454,7 @@ export function assignPsychologist(patientId: string, psychologistId: string): v
 ```
 
 **Field-Level Permission in Form:**
+
 ```typescript
 export function PatientForm({ patient, mode }: PatientFormProps) {
   // TODO: Implement canEditPsychologistField using centralized permissions
@@ -452,12 +467,12 @@ export function PatientForm({ patient, mode }: PatientFormProps) {
       {/* Regular fields - accessible to admin and secretary */}
       <TextField name="name" />
       <TextField name="cpf" />
-      
+
       {/* Field-level permission check */}
       {canEditPsychologistField(currentUser.role) && (
         <PsychologistSelector name="psychologistId" />
       )}
-      
+
       {/* Secretary can edit status, psychologist cannot */}
       {canEditPatientStatus(currentUser.role) && (
         <StatusEditor name="status" />
@@ -470,6 +485,7 @@ export function PatientForm({ patient, mode }: PatientFormProps) {
 ## Business Rules
 
 ### User and Role Management
+
 - **Admin responsibilities**: Registers both clients (patients) and professionals, only admin can generate new crypto keys
 - **Appointment scheduling**: Admin and secretary can schedule appointments, psychologists cannot
 - **Psychologist-patient relationship**: One patient can be linked to only one psychologist, but one psychologist can have multiple patients
@@ -478,10 +494,12 @@ export function PatientForm({ patient, mode }: PatientFormProps) {
 - **Cancellation permissions**: Secretary can cancel appointments/schedules, psychologist can cancel sessions
 
 ### Professional Registration Rules
+
 - **Student intern**: Default end date is last day of June or November (end of semester)
 - **Recent graduate**: Default end date is last day of current year (1 year validity)
 
 ### Appointment and Session Rules
+
 - **Appointment recurrence**: Appointments can be recurring or non-recurring (custom implementation using react-day-picker)
 - **Session-appointment relationship**: Hybrid approach - sessions can be created from appointments but can also exist independently (walk-in sessions)
 - **Appointment changes**: If appointment changes, linked session view changes but past sessions remain unchanged
@@ -494,6 +512,7 @@ export function PatientForm({ patient, mode }: PatientFormProps) {
 - **Session states**: scheduled → confirmed → completed → cancelled (defined in types/session.ts)
 
 ### Cryptography Rules
+
 - **E2E encryption**: True client-side end-to-end encryption
 - **Algorithm**: Elliptic curve cryptography + enveloping
 - **Key management**: Only admin can generate new keys
@@ -502,12 +521,14 @@ export function PatientForm({ patient, mode }: PatientFormProps) {
 - **Security note**: Key management errors are irreversible due to no-deletion policy
 
 ### Patient Management
+
 - **Secretary permissions**: Secretary can edit patient status but NOT psychologist assignment
 - **Field-level permissions**: PsychologistSelector only accessible to admin, StatusEditor accessible to admin and secretary
 - **Patient status**: Active, inactive, deceased, dropout (desistente)
 - **LGPD compliance**: No-deletion policy based on CRP medical record retention regulations (typically 20+ years)
 
 ### Additional Features
+
 - **Sessions**: Track individual therapy sessions with notes, interventions, homework
 - **Anamnesis**: Patient history and assessment forms
 - **Triage**: Initial patient assessment and classification
@@ -516,6 +537,7 @@ export function PatientForm({ patient, mode }: PatientFormProps) {
 ## Role-Based Permission Matrix
 
 ### Admin
+
 - Full access to all features
 - Crypto key management (generate new keys) - ADMIN ONLY
 - User management (create, edit users, assign roles, reset passwords) - NO DELETE
@@ -528,6 +550,7 @@ export function PatientForm({ patient, mode }: PatientFormProps) {
 - Can access all pages and perform all API requests
 
 ### Psychologist
+
 - Patient management (view assigned patients only) - NO CRUD
 - Appointment management (view only - cannot schedule/edit/cancel)
 - Session management (create, edit, view, cancel for their patients' sessions) - NO DELETE
@@ -540,6 +563,7 @@ export function PatientForm({ patient, mode }: PatientFormProps) {
 - Can access patient (view only), session, anamnesis, triage, and limited reports pages
 
 ### Secretary
+
 - Patient management (create, edit, view, can edit patient status) - NO DELETE
 - Appointment management (create, edit, view, cancel, configure recurrence using react-day-picker) - NO DELETE
 - Session management (view only) - NO CRUD
@@ -553,12 +577,14 @@ export function PatientForm({ patient, mode }: PatientFormProps) {
 ## Architecture Decisions
 
 ### State Management Strategy
+
 - **Server state**: React Query (@tanstack/react-query) for all API data (patients, appointments, sessions, etc.)
 - **Client state**: React Context for auth, theme, permissions, crypto
 - **Benefits**: Automatic caching, loading/error states, optimistic updates, cache invalidation
 - **Implementation**: All feature hooks (usePatients, useAppointments, etc.) use React Query patterns
 
 ### Permission System Architecture
+
 - **Single source of truth**: `core/permissions/permissions.ts` contains all permission logic
 - **Centralized hook**: `hooks/usePermissions.ts` is the ONLY way to check permissions in the app
 - **Usage pattern**: `const { can } = usePermissions(); can('action', 'resource')`
@@ -566,31 +592,37 @@ export function PatientForm({ patient, mode }: PatientFormProps) {
 - **UI guards**: Use `can()` for page-level guards AND field-level permissions in forms
 
 ### Shared Component Contracts
+
 - **Priority**: Shared organism interfaces (DataTable, FormWizard) must be defined BEFORE Phase 3
 - **Contract freezing**: Once feature work begins, shared component signatures cannot change
 - **Version control**: Major shared component changes require coordination across all feature squads
 
 ### API Contract Strategy
+
 - **Backend coordination**: API contracts to be defined in separate OpenAPI/Postman spec
 - **Mock strategy**: Use MSW (Mock Service Worker) for frontend development during backend development
 - **Type safety**: Generate TypeScript types from OpenAPI spec when available
 
 ### Admin Recovery
+
 - **Scope**: Admin recovery is backend responsibility, out of frontend scope
 - **Frontend assumption**: Backend provides admin recovery mechanisms
 - **UI consideration**: Frontend displays appropriate error messages if admin account is inaccessible
 
 ### Field-Level Permissions
+
 - **Implementation**: Use centralized `can()` permission checks within form components
 - **Example**: PsychologistSelector only rendered when `can('assign_psychologist', 'patient')`
 - **Pattern**: Conditional rendering based on field-level permissions in shared forms
 
 ### Environment Configuration
+
 - **Strategy**: Use Vite env variables for different environments (.env.development, .env.production)
 - **Configuration**: API base URL, crypto config, feature flags configured per environment
 - **Security**: Never commit sensitive data to repository
 
 ### i18n Considerations
+
 - **Current scope**: All UI strings in PT-BR, no i18n library initially
 - **Future-proof**: String constants centralized in feature-level constants files
 - **Approach**: Add i18n library if multi-language support becomes requirement
@@ -633,6 +665,7 @@ export function PatientForm({ patient, mode }: PatientFormProps) {
 ## Files to Create/Modify
 
 ### Files to Create (FULLY FUNCTIONAL):
+
 - All theme configuration files (theme/)
 - All layout files (layout/MainLayout, layout/AuthLayout, layout/AppBar, layout/Sidebar, layout/MobileDrawer, layout/Footer)
 - All routing files (router/)
@@ -645,6 +678,7 @@ export function PatientForm({ patient, mode }: PatientFormProps) {
 - Environment configuration (.env.example, vite config updates)
 
 ### Files to Create (EMPTY FUNCTION STUBS with implementation guidance):
+
 - All core functionality files (core/crypto/, core/api/, core/auth/, core/businessRules/, core/utils/) - empty function stubs with detailed implementation comments
 - All feature module files (features/auth, features/users, features/patients, features/appointments, features/sessions, features/anamnesis, features/triage, features/reports) - empty function stubs with detailed implementation comments
 - All shared component files (shared/molecules, shared/organisms, shared/templates) - empty function stubs with detailed implementation comments
@@ -652,11 +686,13 @@ export function PatientForm({ patient, mode }: PatientFormProps) {
 - Shared providers (shared/providers/CryptoProvider.tsx, shared/providers/AuthProvider.tsx) - empty function stubs with detailed implementation comments
 
 ### Files to Modify (FULLY FUNCTIONAL):
+
 - `src/App.tsx` - Refactor to use routing and providers
 - `src/main.tsx` - Update if needed for providers
 - `src/index.css` - Simplify to global reset only
 
 ### Dependencies to Install:
+
 - `react-hook-form` - Form handling
 - `@hookform/resolvers` - Form validation resolvers
 - `zod` - Schema validation (recommended for React Hook Form)
@@ -670,6 +706,7 @@ export function PatientForm({ patient, mode }: PatientFormProps) {
 ## Implementation Order and Coordination
 
 ### Phase Dependencies
+
 1. **Phase 1 (Core)** must complete before Phase 3 (Features) for:
    - Centralized permissions system ready for all feature permission checks
    - React Query provider ready for all feature data fetching
@@ -689,6 +726,7 @@ export function PatientForm({ patient, mode }: PatientFormProps) {
    - Regular contract reviews to prevent breaking changes
 
 ### Coordination Requirements
+
 - **Shared component changes**: Require coordination meeting with all feature leads
 - **Permission logic changes**: Update centralized system first, then notify all feature squads
 - **Type definition changes**: Must maintain backward compatibility or coordinate breaking changes

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,6 +7,7 @@ import AlertTitle from '@mui/material/AlertTitle';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
+import { AxiosError } from 'axios';
 
 import { FormField, PasswordField } from '../../../shared/molecules';
 import { useLogin } from '../hooks/useLogin';
@@ -14,6 +16,7 @@ import type { LoginFormValues } from '../schemas';
 
 export function LoginForm() {
   const { login, isLoading } = useLogin();
+  const [loginError, setLoginError] = useState<string | null>(null);
   const {
     control,
     handleSubmit,
@@ -25,18 +28,38 @@ export function LoginForm() {
     reValidateMode: 'onChange',
   });
 
+  const onSubmit = async (values: LoginFormValues) => {
+    setLoginError(null);
+    try {
+      await login(values);
+    } catch (error) {
+      const message =
+        error instanceof AxiosError
+          ? (error.response?.data?.message ?? 'Não foi possível entrar')
+          : 'Não foi possível entrar';
+      setLoginError(message);
+    }
+  };
+
   return (
     <Stack
       component="form"
       spacing={2}
-      onSubmit={handleSubmit(values => login(values))}
+      onSubmit={handleSubmit(onSubmit)}
       noValidate
       aria-label="Formulário de acesso"
     >
+      {loginError ? (
+        <Alert severity="error" role="alert">
+          {loginError}
+        </Alert>
+      ) : null}
+
       <Alert severity="info" variant="outlined">
-        <AlertTitle>Ambiente de demonstração</AlertTitle>
-        Autenticação simulada: use admin@, psicologo@ ou secretaria@ para entrar
-        com cada perfil.
+        <AlertTitle>Ambiente de desenvolvimento</AlertTitle>
+        As credenciais do coordenador inicial são definidas via variáveis de
+        ambiente (<code>COORDINATOR_EMAIL</code> /{' '}
+        <code>COORDINATOR_PASSWORD</code>) — veja o README.
       </Alert>
 
       <Controller

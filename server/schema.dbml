@@ -1,0 +1,520 @@
+// ==========================================================
+// PsiUnisantos — Database Schema (DBML)
+// MySQL 8 target
+//
+// Security model
+//   * Personal and clinical data are stored as encrypted binary
+//     ciphertext (VARBINARY/BLOB) using the application's
+//     envelope-encryption / chain-of-trust model.
+//   * Professional private keys never enter MySQL.
+//   * Professional public keys, fingerprints and trust certificates
+//     may be stored in MySQL.
+//   * Patient DEKs are stored only as wrapped/encrypted material.
+//   * No external KMS/HSM references are modeled.
+//   * Frontend/client code performs patient-data encryption/decryption.
+//   * Spring Boot handles authentication, authorization, persistence,
+//     refresh-token lifecycle and server-observable auditing.
+//   * Access JWTs are stateless and are not persisted in MySQL.
+//   * Refresh tokens are persisted only as hashes/state.
+//   * login_email is intentionally plaintext for the current version
+//     because it is required for authentication and backend e-mail
+//     delivery. A protected lookup mechanism can be introduced later.
+//   * Lookup/reference/application metadata is NOT encrypted merely
+//     because it is textual. It remains queryable in normal SQL.
+//   * Patients do not have User/login profiles.
+//
+// Naming
+//   * Singular PascalCase table names.
+//   * Foreign keys use id_<entity>.
+//   * N:M relationships use explicit associative tables.
+// ==========================================================
+
+
+// ==========================================================
+// DOMAIN TABLES (TYPES AND CLASSIFICATIONS)
+// ==========================================================
+
+Table User_Type {
+  id_user_type int [pk, increment]
+  type_name varchar(30) [unique, note: 'COORDINATOR, SECRETARY, PROFESSIONAL. PATIENT is intentionally not a value — patients have no login profile.']
+}
+
+Table Modality_Type {
+  id_modality_type int [pk, increment]
+  modality_name varchar(20) [unique, note: 'IN_PERSON, ONLINE']
+}
+
+Table Specialty {
+  id_specialty int [pk, increment]
+  specialty_name varchar(80) [unique, note: 'Examples: CBT, Psychoanalysis']
+}
+
+Table Professional_Level {
+  id_level int [pk, increment]
+  level_name varchar(60) [unique, note: 'Examples: Intern Student, Recently Graduated']
+}
+
+Table Patient_Status {
+  id_patient_status int [pk, increment]
+  status_name varchar(30) [unique, note: 'Examples: ACTIVE, DEACTIVATED, DISCHARGED']
+}
+
+Table Session_Status {
+  id_session_status int [pk, increment]
+  status_name varchar(30) [unique, note: 'SCHEDULED, COMPLETED, NO_SHOW, CANCELLED']
+}
+
+Table Target_Audience {
+  id_audience int [pk, increment]
+  audience_name varchar(60) [unique, note: 'Examples: Children, Adolescents']
+}
+
+Table Gender {
+  id_gender int [pk, increment]
+  gender_name varchar(30) [unique]
+}
+
+Table Education_Level {
+  id_education_level int [pk, increment]
+  education_level_name varchar(60) [unique]
+}
+
+Table Ethnicity {
+  id_ethnicity int [pk, increment]
+  ethnicity_name varchar(60) [unique]
+}
+
+Table Tag {
+  id_tag int [pk, increment]
+  tag_name varchar(40) [unique]
+  hex_color varchar(7) [note: '#RRGGBB']
+}
+
+Table Room {
+  id_room int [pk, increment]
+  room_name varchar(60) [unique]
+  is_active boolean [default: true]
+}
+
+Table Key_Status {
+  id_key_status int [pk, increment]
+  status_name varchar(20) [unique, note: 'ACTIVE, REVOKED']
+}
+
+
+// ==========================================================
+// IDENTITY AND AUTHENTICATION
+// ==========================================================
+
+Table User {
+  id_user int [pk, increment]
+  first_name varbinary(255) [note: 'Encrypted']
+  last_name varbinary(255) [note: 'Encrypted']
+  login_email varchar(320) [unique, note: 'Intentionally plaintext for the current version so Spring Boot can authenticate users and send operational e-mails. Can be protected later with an encrypted value plus a keyed lookup value.']
+  password_hash varchar(255) [note: 'One-way password hash such as Argon2id/bcrypt; never plaintext']
+  id_user_type int
+  registration_date timestamp [default: `CURRENT_TIMESTAMP`]
+  is_active boolean [default: false, note: 'Coordinator activation controls whether the account can authenticate']
+}
+
+Table Refresh_Token {
+  id_refresh_token bigint [pk, increment]
+  id_user int
+  token_hash binary(32) [unique, note: 'SHA-256 hash of the raw refresh token; raw token is never stored']
+  family_id bigint [note: 'Token-family identifier used for refresh-token rotation and reuse detection']
+  replaced_by_token bigint [null, note: 'Previous token points to the next rotated token']
+  issued_at timestamp [default: `CURRENT_TIMESTAMP`]
+  expires_at timestamp
+  used_at timestamp [null]
+  revoked_at timestamp [null]
+  ip_address varbinary(45) [null]
+  user_agent varbinary(255) [null]
+}
+
+Table Password_Reset_Token {
+  id_password_reset bigint [pk, increment]
+  id_user int
+  token_hash binary(32) [unique, note: 'SHA-256 hash of the raw reset token']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  expires_at timestamp
+  used_at timestamp [null]
+}
+
+
+// ==========================================================
+// PROFESSIONAL
+// ==========================================================
+
+Table Professional {
+  id_professional int [pk, increment]
+  id_user int [unique]
+  id_professional_level int
+  cpf varbinary(512) [note: 'Encrypted']
+  phone varbinary(512) [note: 'Encrypted']
+  birth_date varbinary(64) [note: 'Encrypted date of birth']
+  crp_registration varbinary(512) [note: 'Encrypted professional registration']
+  identification_color varchar(7) [null, note: 'Technical/UI metadata such as #RRGGBB; not personal data']
+}
+
+Table Professional_Specialty {
+  id_professional_specialty int [pk, increment]
+  id_professional int
+  id_specialty int
+  Note: 'Many-to-many: a psychologist can have multiple specialties.'
+}
+
+Table Professional_Target_Audience {
+  id_professional_audience int [pk, increment]
+  id_professional int
+  id_audience int
+
+  indexes {
+    (id_professional, id_audience) [unique]
+  }
+}
+
+Table Professional_Availability {
+  id_availability int [pk, increment]
+  id_professional int
+  day_of_week tinyint [note: '1 to 7']
+  start_time time
+  end_time time [note: 'Must be greater than start_time']
+}
+
+
+// ==========================================================
+// PATIENT
+// ==========================================================
+
+Table Patient {
+  id_patient int [pk, increment]
+  id_professional int [note: 'Responsible psychologist']
+  id_patient_status int
+  id_gender int [null]
+  id_education_level int [null]
+  id_ethnicity int [null]
+  first_name varbinary(255) [note: 'Encrypted']
+  last_name varbinary(255) [note: 'Encrypted']
+  social_name varbinary(255) [null, note: 'Encrypted']
+  contact_email varbinary(255) [null, note: 'Encrypted']
+  mobile_phone varbinary(255) [null, note: 'Encrypted']
+  landline_phone varbinary(255) [null, note: 'Encrypted']
+  cpf varbinary(512) [null, note: 'Encrypted']
+  rg varbinary(512) [null, note: 'Encrypted']
+  birth_date varbinary(64) [note: 'Encrypted date of birth']
+  place_of_birth varbinary(120) [null, note: 'Encrypted']
+  occupation varbinary(120) [null, note: 'Encrypted']
+  how_they_found_us varbinary(120) [null, note: 'Encrypted']
+  referred_by varbinary(120) [null, note: 'Encrypted']
+  identification_color varchar(7) [null, note: 'Technical/UI metadata such as #RRGGBB']
+  notes blob [null, note: 'Encrypted free-form data']
+  registration_date timestamp [default: `CURRENT_TIMESTAMP`]
+  registered_by_user int [note: 'Secretary or Coordinator who created the record']
+}
+
+Table Patient_Address {
+  id_address int [pk, increment]
+  id_patient int [unique]
+  country varbinary(60) [null, note: 'Encrypted']
+  zip_code varbinary(12) [null, note: 'Encrypted']
+  state varbinary(60) [null, note: 'Encrypted']
+  city varbinary(80) [null, note: 'Encrypted']
+  neighborhood varbinary(80) [null, note: 'Encrypted']
+  street varbinary(150) [null, note: 'Encrypted']
+  number varbinary(20) [null, note: 'Encrypted']
+  complement varbinary(80) [null, note: 'Encrypted']
+}
+
+Table Patient_Guardian {
+  id_guardian int [pk, increment]
+  id_patient int [unique]
+  guardian_name varbinary(255) [note: 'Encrypted']
+  guardian_email varbinary(255) [null, note: 'Encrypted']
+  guardian_mobile_phone varbinary(255) [null, note: 'Encrypted']
+  guardian_cpf varbinary(512) [null, note: 'Encrypted']
+  guardian_rg varbinary(512) [null, note: 'Encrypted']
+  guardian_birth_date varbinary(64) [null, note: 'Encrypted date of birth']
+  allow_document_billing boolean [default: false]
+  allow_session_reminders boolean [default: true]
+}
+
+Table Emergency_Contact {
+  id_emergency_contact int [pk, increment]
+  id_patient int
+  name varbinary(255) [note: 'Encrypted']
+  relationship varbinary(60) [null, note: 'Encrypted']
+  phone varbinary(255) [note: 'Encrypted']
+  is_primary boolean [default: true, note: 'Only one primary contact per patient; enforce in application/DB constraint']
+}
+
+Table Patient_Tag {
+  id_patient_tag int [pk, increment]
+  id_patient int
+  id_tag int
+
+  indexes {
+    (id_patient, id_tag) [unique]
+  }
+}
+
+
+// ==========================================================
+// SCHEDULING AND CARE
+// ==========================================================
+
+Table Therapy_Session {
+  id_session int [pk, increment]
+  id_professional int
+  id_patient int
+  id_modality_type int
+  id_room int [null, note: 'Only relevant for IN_PERSON']
+  id_session_status int
+  start_datetime datetime
+  end_datetime datetime [note: 'Must be greater than start_datetime']
+  is_recurring boolean [default: false]
+  virtual_room_token varbinary(64) [null, note: 'Opaque/secret room credential']
+  virtual_room_expires datetime [null]
+  scheduled_by_user int
+  no_show_processed_at timestamp [null, note: 'Set by the scheduled no-show process']
+}
+
+Table Triage {
+  id_triage int [pk, increment]
+  id_patient int [unique, note: 'One intake triage per patient']
+  id_professional int
+  triage_date timestamp [default: `CURRENT_TIMESTAMP`]
+  initial_complaint blob [note: 'Encrypted']
+  referral_recommendation blob [null, note: 'Encrypted']
+  notes blob [null, note: 'Encrypted']
+}
+
+Table Anamnesis_Complaints {
+  id_complaint int [pk, increment]
+  complaint_name varchar(120) [unique]
+}
+
+Table Anamnesis_Emotions {
+  id_emotion int [pk, increment]
+  emotion_name varchar(80) [unique]
+}
+
+Table Anamnesis {
+  id_anamnesis int [pk, increment]
+  id_patient int [unique]
+  id_professional int
+  opening_date timestamp [default: `CURRENT_TIMESTAMP`]
+  family_history blob [null, note: 'Encrypted']
+  diagnostic_hypothesis blob [null, note: 'Encrypted']
+  general_notes blob [null, note: 'Encrypted']
+  treatment_plan blob [null, note: 'Encrypted']
+  referrals blob [null, note: 'Encrypted']
+}
+
+Table Anamnesis_Complaint {
+  id_anamnesis_complaint int [pk, increment]
+  id_anamnesis int
+  id_complaint int
+
+  indexes {
+    (id_anamnesis, id_complaint) [unique]
+  }
+}
+
+Table Anamnesis_Emotion {
+  id_anamnesis_emotion int [pk, increment]
+  id_anamnesis int
+  id_emotion int
+
+  indexes {
+    (id_anamnesis, id_emotion) [unique]
+  }
+}
+
+Table Report {
+  id_report int [pk, increment]
+  id_patient int
+  id_professional int
+  report_type varchar(40) [note: 'Examples: LAUDO, ATESTADO, RELATORIO']
+  issue_date date
+  content blob [note: 'Encrypted']
+  file_path varchar(255) [null, note: 'Technical pointer to generated file; file bytes are not stored here']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table Medical_Record_Transfer {
+  id_transfer int [pk, increment]
+  id_patient int
+  id_professional_from int
+  id_professional_to int
+  transferred_by_user int [note: 'Coordinator responsible for the transfer']
+  transfer_date timestamp [default: `CURRENT_TIMESTAMP`]
+  reason varbinary(255) [null, note: 'Encrypted']
+
+  Note: 'There is no physical Medical_Record table. The medical record is a logical consolidation of Triage, Anamnesis, Therapy_Session and Report for a patient.'
+}
+
+
+// ==========================================================
+// CRYPTOGRAPHY / CHAIN OF TRUST
+// ==========================================================
+// Private keys remain only on the professional device.
+// Public keys are stored because they are not secret.
+// The Coordinator establishes the trusted professional-key relationship.
+// Patient DEKs are stored only in wrapped/encrypted form.
+// No private key, plaintext DEK, KMS/HSM reference or external envelope
+// reference is stored in MySQL.
+
+Table Key_Reference {
+  id_key_reference int [pk, increment]
+  id_professional int
+  public_key varbinary(4096) [note: 'Professional public key; private key never enters MySQL']
+  key_fingerprint varbinary(32) [note: 'Cryptographic fingerprint of the public key; non-secret verification metadata']
+  trust_certificate varbinary(4096) [note: 'Public/verifiable trust certificate associated with the professional key']
+  id_key_status int
+  generated_by_user int [note: 'Coordinator who establishes the professional key relationship']
+  generated_at timestamp [default: `CURRENT_TIMESTAMP`]
+  revoked_at timestamp [null]
+}
+
+Table Patient_Key_Reference {
+  id_reference bigint [pk, increment]
+  id_patient int
+  id_key_reference int
+  wrapped_dek blob [note: 'Encrypted/wrapped patient DEK; plaintext DEK is never stored']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  revoked_at timestamp [null]
+
+  indexes {
+    (id_patient, id_key_reference) [unique]
+  }
+}
+
+
+// ==========================================================
+// RBAC / AUTHORIZATION
+// ==========================================================
+
+Table Module {
+  id_module int [pk, increment]
+  module_key varchar(40) [unique]
+  module_name varchar(80)
+}
+
+Table Resource {
+  id_resource int [pk, increment]
+  id_module int
+  resource_key varchar(80) [unique]
+  resource_name varchar(150)
+}
+
+Table Permission {
+  id_permission int [pk, increment]
+  id_user_type int
+  id_resource int
+  can_create boolean [default: false]
+  can_read boolean [default: false]
+  can_update boolean [default: false]
+  can_delete boolean [default: false]
+  scope enum('ALL', 'OWN') [default: 'ALL', note: 'OWN requires row-level authorization in the Spring Boot service']
+
+  indexes {
+    (id_user_type, id_resource) [unique]
+  }
+}
+
+
+// ==========================================================
+// AUDITING
+// ==========================================================
+// This log records events observable by Spring Boot.
+// It does not claim to observe frontend-only encryption/decryption.
+// Key-management state changes can be audited here because the server
+// observes the corresponding persistent changes.
+
+Table Audit_Log {
+  id_audit bigint [pk, increment]
+  id_user int [note: 'Actor']
+  action varchar(100)
+  entity_name varchar(100)
+  entity_id bigint [null]
+  occurred_at timestamp [default: `CURRENT_TIMESTAMP`]
+  ip_address varbinary(45) [null]
+  user_agent varbinary(255) [null]
+  details blob [null, note: 'Protected event details when they contain sensitive information']
+}
+
+
+// ==========================================================
+// RELATIONSHIP MAPPING (FOREIGN KEYS)
+// ==========================================================
+
+// User / authentication
+Ref: User.id_user_type > User_Type.id_user_type
+Ref: Refresh_Token.id_user > User.id_user
+Ref: Password_Reset_Token.id_user > User.id_user
+Ref: Refresh_Token.replaced_by_token > Refresh_Token.id_refresh_token
+
+// Professional
+Ref: Professional.id_user - User.id_user
+Ref: Professional.id_professional_level > Professional_Level.id_level
+Ref: Professional_Specialty.id_professional > Professional.id_professional
+Ref: Professional_Specialty.id_specialty > Specialty.id_specialty
+Ref: Professional_Target_Audience.id_professional > Professional.id_professional
+Ref: Professional_Target_Audience.id_audience > Target_Audience.id_audience
+Ref: Professional_Availability.id_professional > Professional.id_professional
+
+// Patient
+Ref: Patient.id_professional > Professional.id_professional
+Ref: Patient.id_patient_status > Patient_Status.id_patient_status
+Ref: Patient.id_gender > Gender.id_gender
+Ref: Patient.id_education_level > Education_Level.id_education_level
+Ref: Patient.id_ethnicity > Ethnicity.id_ethnicity
+Ref: Patient.registered_by_user > User.id_user
+
+// Patient extensions
+Ref: Patient_Address.id_patient - Patient.id_patient
+Ref: Patient_Guardian.id_patient - Patient.id_patient
+Ref: Emergency_Contact.id_patient > Patient.id_patient
+Ref: Patient_Tag.id_patient > Patient.id_patient
+Ref: Patient_Tag.id_tag > Tag.id_tag
+
+// Scheduling and care
+Ref: Therapy_Session.id_professional > Professional.id_professional
+Ref: Therapy_Session.id_patient > Patient.id_patient
+Ref: Therapy_Session.id_modality_type > Modality_Type.id_modality_type
+Ref: Therapy_Session.id_room > Room.id_room
+Ref: Therapy_Session.id_session_status > Session_Status.id_session_status
+Ref: Therapy_Session.scheduled_by_user > User.id_user
+
+Ref: Triage.id_patient - Patient.id_patient
+Ref: Triage.id_professional > Professional.id_professional
+
+Ref: Anamnesis.id_patient - Patient.id_patient
+Ref: Anamnesis.id_professional > Professional.id_professional
+Ref: Anamnesis_Complaint.id_anamnesis > Anamnesis.id_anamnesis
+Ref: Anamnesis_Complaint.id_complaint > Anamnesis_Complaints.id_complaint
+Ref: Anamnesis_Emotion.id_anamnesis > Anamnesis.id_anamnesis
+Ref: Anamnesis_Emotion.id_emotion > Anamnesis_Emotions.id_emotion
+
+Ref: Report.id_patient > Patient.id_patient
+Ref: Report.id_professional > Professional.id_professional
+
+Ref: Medical_Record_Transfer.id_patient > Patient.id_patient
+Ref: Medical_Record_Transfer.id_professional_from > Professional.id_professional
+Ref: Medical_Record_Transfer.id_professional_to > Professional.id_professional
+Ref: Medical_Record_Transfer.transferred_by_user > User.id_user
+
+// Cryptography
+Ref: Key_Reference.id_professional > Professional.id_professional
+Ref: Key_Reference.id_key_status > Key_Status.id_key_status
+Ref: Key_Reference.generated_by_user > User.id_user
+Ref: Patient_Key_Reference.id_patient > Patient.id_patient
+Ref: Patient_Key_Reference.id_key_reference > Key_Reference.id_key_reference
+
+// RBAC
+Ref: Resource.id_module > Module.id_module
+Ref: Permission.id_user_type > User_Type.id_user_type
+Ref: Permission.id_resource > Resource.id_resource
+
+// Audit
+Ref: Audit_Log.id_user > User.id_user

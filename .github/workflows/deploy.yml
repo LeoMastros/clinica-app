@@ -1,7 +1,12 @@
 name: Deploy
 
+# Deploys only after the Tests workflow passes on main — a broken build or
+# failing test suite never reaches the VM. Manual dispatch still available
+# for emergency redeploys.
 on:
-  push:
+  workflow_run:
+    workflows: [Tests]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -9,6 +14,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: Dev
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Deploy via SSH na Oracle VM
         uses: appleboy/ssh-action@v1.0.3

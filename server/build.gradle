@@ -1,7 +1,10 @@
 plugins {
 	id 'java'
+	id 'jacoco'
 	id 'org.springframework.boot' version '4.1.1'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'com.diffplug.spotless' version '6.25.0'
+	id 'checkstyle'
 }
 
 group = 'com.unisantos'
@@ -27,6 +30,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	implementation 'org.flywaydb:flyway-mysql'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0'
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -50,4 +56,40 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy tasks.jacocoTestReport
 }
+
+tasks.jacocoTestReport {
+	dependsOn tasks.test
+	reports {
+		xml.required = true
+		html.required = true
+	}
+}
+
+checkstyle {
+	toolVersion = '10.12.5'
+	configFile = file('config/checkstyle/checkstyle.xml')
+	ignoreFailures = false
+	maxWarnings = 0
+}
+
+tasks.withType(Checkstyle).configureEach {
+	reports {
+		xml.required = true
+		html.required = true
+	}
+}
+
+spotless {
+	java {
+		googleJavaFormat('1.28.0')
+		target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
+		trimTrailingWhitespace()
+		endWithNewline()
+		removeUnusedImports()
+		importOrder()
+	}
+}
+
+build.dependsOn 'spotlessCheck'

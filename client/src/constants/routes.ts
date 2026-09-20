@@ -1,6 +1,5 @@
 export const ROUTES = {
   login: '/login',
-  signup: '/signup',
   appointments: '/agendamentos',
   triage: '/triagem',
   anamnesis: '/anamnese',

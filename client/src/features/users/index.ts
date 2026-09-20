@@ -1,6 +1,7 @@
 export { UserListPage } from './pages/UserListPage';
 export { UserTable } from './components/UserTable';
 export { UserModal } from './components/UserModal';
+export { UserDetailModal } from './components/UserDetailModal';
 export { UserForm } from './components/UserForm';
 export { ResetPasswordModal } from './components/ResetPasswordModal';
 export { RoleSelector } from './components/RoleSelector';

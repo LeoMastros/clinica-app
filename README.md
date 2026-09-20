@@ -1,30 +1,3 @@
-lear
-
-bun run test:e2e:video
-$ bun run e2e:stack && cross-env E2E_VIDEO=on playwright test --project=chromium
-$ bun e2e/scripts/start-stack.ts
-✓ MySQL dev container already up (:3307)
-• Starting API: ./gradlew bootRun (log: /tmp/e2e-api.log)...
-65 |   });
-66 | }
-67 |
-68 | function spawnDetached(command: string, cwd: string, logName: string): void {
-69 |   const log = openSync(`/tmp/e2e-${logName}.log`, 'a');
-70 |   const child = spawn('bash', ['-c', command], {
-                     ^
-ENOENT: no such file or directory, posix_spawn 'bash'
-      path: "bash",
-   syscall: "spawn bash",
-     errno: -2,
- spawnargs: [ "-c", "./gradlew bootRun" ],
-      code: "ENOENT"
-
-      at spawn (node:child_process:721:35)
-      at spawn (node:child_process:22:39)
-      at spawnDetached (/home/eagle/Projects/clinica-app/client/e2e/scripts/start-stack.ts:70:17)
-      at ensureApi (/home/eagle/Projects/clinica-app/client/e2e/scripts/start-stack.ts💯3)
-^C
-
 # PsiUnisantos — Sistema de Gestão da Clínica Escola de Psicologia
 
 Monorepo que unifica o cliente e o servidor, organizado em domínios de negócio para facilitar o trabalho paralelo das squads.

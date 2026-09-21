@@ -2,40 +2,38 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { AuthContext } from '../../core/auth/context';
-import { getCurrentUser, login as autenticar, logout as encerrar } from '../../core/auth/service';
+import {
+  login as apiLogin,
+  logout as apiLogout,
+  getCurrentUser,
+  refreshSession,
+} from '../../core/auth/service';
 import type { Credentials } from '../../core/auth/types';
-import type { ApiError } from '../../types/api';
 import type { User } from '../../types/user';
-
-function mensagemDaFalha(erro: unknown): string {
-  const apiError = erro as Partial<ApiError>;
-  if (typeof apiError?.message === 'string' && apiError.message.length > 0) {
-    return apiError.message;
-  }
-  return 'Não foi possível entrar. Tente novamente.';
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Session restore: the access token lives in memory and is lost on reload,
+  // but the httpOnly refresh cookie survives — exchange it, then load /me.
+  // Guards wait on this before deciding anything.
+  const [isRestoring, setIsRestoring] = useState(true);
 
-  // Ao abrir o app, confere com o servidor se o token guardado ainda vale.
-  // Sem isto, recarregar a página derrubaria a sessão.
   useEffect(() => {
-    let cancelado = false;
-
-    getCurrentUser()
-      .then(perfil => {
-        if (!cancelado) setUser(perfil);
-      })
-      .finally(() => {
-        if (!cancelado) setIsInitializing(false);
-      });
-
+    let cancelled = false;
+    (async () => {
+      try {
+        await refreshSession();
+        const restored = await getCurrentUser();
+        if (!cancelled) setUser(restored);
+      } catch {
+        if (!cancelled) setUser(null);
+      } finally {
+        if (!cancelled) setIsRestoring(false);
+      }
+    })();
     return () => {
-      cancelado = true;
+      cancelled = true;
     };
   }, []);
 
@@ -43,21 +41,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     setError(null);
     try {
+<<<<<<< HEAD
       setUser(await autenticar(credentials));
     } catch (erro) {
       // A falha vira estado para o formulário exibir. Propagar aqui deixaria
       // uma promise rejeitada sem dono, já que o submit não a aguarda.
       setUser(null);
       setError(mensagemDaFalha(erro));
+=======
+      setUser(await apiLogin(credentials));
+>>>>>>> upstream/main
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   const logout = useCallback(() => {
+<<<<<<< HEAD
     void encerrar();
     setUser(null);
     setError(null);
+=======
+    void apiLogout();
+    setUser(null);
+>>>>>>> upstream/main
   }, []);
 
   const value = useMemo(
@@ -65,12 +72,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isAuthenticated: user !== null,
       isLoading,
+<<<<<<< HEAD
       isInitializing,
       error,
       login,
       logout,
     }),
     [user, isLoading, isInitializing, error, login, logout]
+=======
+      isRestoring,
+      login,
+      logout,
+    }),
+    [user, isLoading, isRestoring, login, logout]
+>>>>>>> upstream/main
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

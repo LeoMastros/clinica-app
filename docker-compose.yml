@@ -21,6 +21,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+<<<<<<< HEAD
       # O Compose so injeta no container o que esta declarado aqui. Sem estas
       # linhas, por o valor no .env nao surte efeito nenhum.
       # Os padroes espelham os da aplicacao: quem nao definir nada continua com
@@ -33,6 +34,15 @@ services:
       CLINICA_ADMIN_INICIAL_NOME: ${CLINICA_ADMIN_INICIAL_NOME:-Administrador}
       CLINICA_ADMIN_INICIAL_EMAIL: ${CLINICA_ADMIN_INICIAL_EMAIL:-}
       CLINICA_ADMIN_INICIAL_SENHA: ${CLINICA_ADMIN_INICIAL_SENHA:-}
+=======
+      COORDINATOR_EMAIL: ${COORDINATOR_EMAIL}
+      COORDINATOR_PASSWORD: ${COORDINATOR_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      # Prod: set to the frontend origin (e.g. https://app.your-domain.com)
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      # Prod (HTTPS): must be true — marks the refresh cookie Secure.
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
+>>>>>>> upstream/main
     depends_on:
       mysql:
         condition: service_healthy

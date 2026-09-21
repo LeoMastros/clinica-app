@@ -1,19 +1,47 @@
+const API_V1 = '/api/v1';
+
 export const ENDPOINTS = {
-  // Nao existe cadastro publico: quem cria usuario e o administrador, pela
-  // tela de gestao de usuarios.
-  auth: { login: '/auth/login', me: '/auth/me' },
+  auth: {
+    login: `${API_V1}/auth/login`,
+    logout: `${API_V1}/auth/logout`,
+    refresh: `${API_V1}/auth/refresh`,
+    me: `${API_V1}/auth/me`,
+    forgotPassword: `${API_V1}/auth/forgot-password`,
+    resetPassword: `${API_V1}/auth/reset-password`,
+  },
   users: {
-    root: '/users',
-    byId: (id: string) => `/users/${id}`,
-    resetPassword: (id: string) => `/users/${id}/reset-password`,
+    root: `${API_V1}/users`,
+    byId: (id: string) => `${API_V1}/users/${id}`,
+    activation: (id: string) => `${API_V1}/users/${id}/activation`,
+    resetPassword: (id: string) => `${API_V1}/users/${id}/reset-password`,
   },
-  patients: { root: '/patients', byId: (id: string) => `/patients/${id}` },
+  professionals: {
+    root: `${API_V1}/professionals`,
+    byId: (id: string) => `${API_V1}/professionals/${id}`,
+  },
+  lookups: { root: `${API_V1}/lookups` },
+  patients: {
+    root: `${API_V1}/patients`,
+    byId: (id: string) => `${API_V1}/patients/${id}`,
+  },
   appointments: {
-    root: '/appointments',
-    byId: (id: string) => `/appointments/${id}`,
+    root: `${API_V1}/appointments`,
+    byId: (id: string) => `${API_V1}/appointments/${id}`,
   },
-  sessions: { root: '/sessions', byId: (id: string) => `/sessions/${id}` },
-  anamnesis: { root: '/anamnesis', byId: (id: string) => `/anamnesis/${id}` },
-  triage: { root: '/triage', byId: (id: string) => `/triage/${id}` },
-  reports: { root: '/reports', byId: (id: string) => `/reports/${id}` },
+  sessions: {
+    root: `${API_V1}/sessions`,
+    byId: (id: string) => `${API_V1}/sessions/${id}`,
+  },
+  anamnesis: {
+    root: `${API_V1}/anamnesis`,
+    byId: (id: string) => `${API_V1}/anamnesis/${id}`,
+  },
+  triage: {
+    root: `${API_V1}/triage`,
+    byId: (id: string) => `${API_V1}/triage/${id}`,
+  },
+  reports: {
+    root: `${API_V1}/reports`,
+    byId: (id: string) => `${API_V1}/reports/${id}`,
+  },
 } as const;

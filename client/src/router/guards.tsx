@@ -10,29 +10,11 @@ import { usePermissions } from '../hooks/usePermissions';
 import type { Resource } from '../types/permissions';
 
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isInitializing } = useAuth();
+  const { isAuthenticated, isRestoring } = useAuth();
   const location = useLocation();
 
-  // Enquanto a sessão guardada está sendo conferida com o servidor, ainda não
-  // dá para saber se a pessoa está logada. Redirecionar aqui expulsaria quem
-  // recarregou a página com um token perfeitamente válido.
-  if (isInitializing) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh',
-        }}
-        role="status"
-        aria-live="polite"
-        aria-label="Verificando sessão"
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
+  // Wait for the session-restore attempt before deciding.
+  if (isRestoring) return null;
 
   if (!isAuthenticated) {
     return (

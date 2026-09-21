@@ -14,16 +14,10 @@ export interface AuthResponse {
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  /** Uma tentativa de login está em andamento. */
+  /** A request is in flight (login, or the initial session restore). */
   isLoading: boolean;
-  /**
-   * A sessão guardada ainda está sendo conferida com o servidor. Enquanto for
-   * verdadeiro, `isAuthenticated` ser falso não significa que o usuário está
-   * de fora — as rotas protegidas precisam esperar em vez de redirecionar.
-   */
-  isInitializing: boolean;
-  /** Mensagem da última falha de login, pronta para exibir. */
-  error: string | null;
+  /** True only while the boot-time session restore is unresolved. */
+  isRestoring: boolean;
 }
 
 export interface AuthContextValue extends AuthState {

@@ -8,7 +8,13 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores([
+    'dist',
+    // Generated artifacts — never lint build/test output
+    'e2e/test-results',
+    'e2e/playwright-report',
+    'coverage',
+  ]),
   {
     files: ['**/*.{ts,tsx}', '**/*.{js,jsx}'],
     extends: [
@@ -37,6 +43,18 @@ export default defineConfig([
           caughtErrorsIgnorePattern: '^_',
         },
       ],
+    },
+  },
+  {
+    // Playwright e2e code — fixture callbacks call `use()` (not a React
+    // hook) and empty object patterns are valid fixture signatures.
+    files: ['e2e/**/*.{ts,tsx}', 'playwright.config.ts'],
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.node },
+    },
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
+      'no-empty-pattern': 'off',
     },
   },
 ]);

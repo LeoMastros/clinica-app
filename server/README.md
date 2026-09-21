@@ -88,46 +88,59 @@ Isso confirma que a aplicação subiu com sucesso e está rodando na porta **808
 Para parar a aplicação (e o container do MySQL, que é derrubado junto), use `Ctrl+C`
 no terminal onde o comando está rodando.
 
-## 4. Autenticação: por que a API pede usuário e senha
+## 4. Autenticação: JWT, não mais usuário/senha do Spring
 
-Como o **Spring Security** está entre as dependências do projeto, por padrão ele exige
-autenticação para acessar qualquer endpoint da aplicação — inclusive para páginas de
-diagnóstico, como o Swagger e o Actuator. Isso é intencional e esperado nesta fase do
-projeto: nenhuma configuração de login customizada foi feita ainda.
+> **Nota histórica:** quando este projeto foi gerado, o Spring Security ainda
+> não tinha configuração própria — então o Spring Boot aplicava o fallback de
+> **HTTP Basic** com um usuário `user` e uma senha UUID gerada a cada boot
+> (aquele popup do navegador + `Using generated security password` no log).
+> Isso **não existe mais**: agora há um `SecurityConfig` real e a API é
+> stateless via JWT — sem popup, sem sessão, sem senha gerada.
 
-Sempre que a aplicação é iniciada, o Spring gera uma senha aleatória e a exibe no
-terminal, em uma linha parecida com esta:
+Hoje a autenticação funciona assim:
 
-```
-Using generated security password: 7x82a4d6-6a14-4635
-```
+1. `POST /api/v1/auth/login` com email/senha de uma conta (o coordenador é
+   seedado via `COORDINATOR_EMAIL` / `COORDINATOR_PASSWORD` do `.env`) —
+   retorna um **access token** JWT (24h) e grava um **refresh token** em
+   cookie httpOnly (7 dias).
+2. Toda rota protegida exige `Authorization: Bearer <accessToken>` — sem ele
+   a resposta é `403` (no navegador: página em branco, sem popup).
+3. `POST /api/v1/auth/refresh` troca o cookie por um novo access token;
+   `GET /api/v1/auth/me` devolve o perfil do usuário autenticado.
 
-**Essa senha muda a cada vez que a aplicação é reiniciada.** Para acessar qualquer
-endpoint protegido, use:
-
-- **Usuário:** `user`
-- **Senha:** o UUID exibido no terminal naquele momento
-
-Exemplo de acesso via terminal:
-
-```bash
-curl -u user:7x82a4d6-6a14-4635 http://localhost:8080/actuator/health
-```
-
-Ao acessar pelo navegador, um popup de login vai aparecer pedindo esses mesmos dados.
+Endpoints públicos (sem token): `/auth/login`, `/auth/refresh`,
+`/auth/logout`, Swagger UI, `/v3/api-docs` e `/actuator/health`.
+`/auth/forgot-password` e `/auth/reset-password` **exigem token** — só o
+dono da conta pode rotacionar a própria senha.
 
 ## 5. URLs disponíveis para teste
 
-Com a aplicação rodando, os seguintes endereços ficam disponíveis em
-`http://localhost:8080`:
+Com a aplicação rodando (`./gradlew bootRun` — lê o `.env` da raiz
+automaticamente), os seguintes endereços ficam disponíveis:
 
 | URL | O que mostra |
 |---|---|
-| `/actuator/health` | Indica se a aplicação está saudável (`{"status":"UP"}`) |
-| `/actuator/metrics` | Lista métricas internas da aplicação (memória, threads, requisições, etc.) |
-| `/actuator/prometheus` | As mesmas métricas, no formato que o Prometheus entende |
-| `/swagger-ui.html` | Interface visual interativa listando todos os endpoints da API |
-| `/v3/api-docs` | A especificação OpenAPI da API em formato JSON (usada internamente pelo Swagger UI) |
+| http://localhost:8080/swagger-ui/index.html | **Swagger UI** — interface visual listando todos os endpoints da API |
+| http://localhost:8080/v3/api-docs | Especificação OpenAPI em JSON (usada pelo Swagger UI) |
+| http://localhost:8080/actuator/health | Saúde da aplicação (`{"status":"UP"}`) |
+
+A API é REST pura — `http://localhost:8080/` sozinho retorna 403 (não há
+página inicial; toda rota é protegida por JWT).
+
+### Testando endpoints pelo Swagger UI
+
+Rotas marcadas com cadeado exigem um **Bearer access token**:
+
+1. Execute `POST /api/v1/auth/login` com o coordenador do `.env`
+   (`COORDINATOR_EMAIL` / `COORDINATOR_PASSWORD`) e copie o `accessToken`
+   da resposta.
+2. Clique em **Authorize** (canto superior direito), cole o token e confirme.
+3. Todas as chamadas seguintes já saem com `Authorization: Bearer <token>`
+   — o cadeado indica exatamente quais rotas precisam disso.
+
+Os endpoints públicos (`/auth/login`, `/auth/refresh`, `/auth/logout`) não
+mostram o cadeado. `/auth/forgot-password` e `/auth/reset-password` exigem
+token — só o dono da conta pode gerar/usar um reset token.
 
 > Se estiver rodando dentro do GitHub Codespaces, substitua `http://localhost:8080`
 > pela URL pública gerada automaticamente na aba **PORTS** do VS Code para a porta 8080.

@@ -24,9 +24,7 @@ function protectedRoute(resource: Resource, element: ReactElement) {
 export const router = createBrowserRouter([
   {
     element: <AuthLayout />,
-    children: [
-      { path: ROUTES.login, element: <LoginPage /> },
-    ],
+    children: [{ path: ROUTES.login, element: <LoginPage /> }],
   },
   {
     element: (

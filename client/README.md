@@ -4,11 +4,11 @@ Aplicação desenvolvida em **React, TypeScript e Vite**, focada em alta perform
 
 ## Tecnologias e Arquitetura
 
-* **Framework:** React com TypeScript
-* **Ferramenta de Build:** Vite (com HMR ativado)
-* **Gerenciador de Pacotes:** Bun (Anthropic)
-* **Estilização e Componentes:** Material UI (Google)
-* **Testes End-to-End (E2E):** Playwright
+- **Framework:** React com TypeScript
+- **Ferramenta de Build:** Vite (com HMR ativado)
+- **Gerenciador de Pacotes:** Bun (Anthropic)
+- **Estilização e Componentes:** Material UI (Google)
+- **Testes End-to-End (E2E):** Playwright
 
 ---
 
@@ -49,21 +49,22 @@ A aplicação estará acessível em `http://localhost:5173`.
 
 ## Comandos Úteis
 
-* **Gerar build de produção:**
+- **Gerar build de produção:**
+
 ```bash
 bun run build
 
 ```
 
+- **Executar testes E2E com Playwright:**
 
-* **Executar testes E2E com Playwright:**
 ```bash
 bun run test:e2e
 
 ```
 
+- **Abrir a interface gráfica do Playwright:**
 
-* **Abrir a interface gráfica do Playwright:**
 ```bash
 bun run test:e2e:ui
 

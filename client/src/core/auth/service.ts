@@ -1,44 +1,85 @@
+import type { Role } from '../../types/permissions';
 import type { User } from '../../types/user';
-import { apiClient } from '../api/client';
+import apiClient, { clearAccessToken, setAccessToken } from '../api/client';
 import { ENDPOINTS } from '../api/endpoints';
-import { clearToken, readToken, storeToken } from '../api/interceptors';
-import type { AuthResponse, Credentials } from './types';
+import type { Credentials } from './types';
 
-/**
- * Autentica e guarda o token para as próximas requisições.
- *
- * <p>Erros sobem como `ApiError`, já traduzidos pelo interceptador — o
- * formulário mostra a mensagem como veio do servidor.
- */
+type UserTypeName = 'COORDINATOR' | 'SECRETARY' | 'PROFESSIONAL';
+
+interface LoginPayload {
+  accessToken: string;
+  email: string;
+  userId: number;
+  userType: UserTypeName;
+}
+
+interface MePayload {
+  id: number;
+  firstName: string | null;
+  lastName: string | null;
+  loginEmail: string;
+  userType: UserTypeName;
+  isActive: boolean;
+}
+
+const ROLE_MAP: Record<UserTypeName, Role> = {
+  COORDINATOR: 'admin',
+  SECRETARY: 'secretary',
+  PROFESSIONAL: 'psychologist',
+};
+
 export async function login(credentials: Credentials): Promise<User> {
-  const { data } = await apiClient.post<AuthResponse>(
+  const { data } = await apiClient.post<{ data: LoginPayload }>(
     ENDPOINTS.auth.login,
-    credentials
+    { email: credentials.email, password: credentials.password }
   );
-  storeToken(data.token);
-  return data.user;
+  const payload = data.data;
+  setAccessToken(payload.accessToken);
+  return {
+    id: String(payload.userId),
+    name: payload.email.split('@')[0] ?? payload.email,
+    email: payload.email,
+    role: ROLE_MAP[payload.userType] ?? 'secretary',
+    active: true,
+  };
 }
 
 export async function logout(): Promise<void> {
-  clearToken();
+  try {
+    await apiClient.post(ENDPOINTS.auth.logout);
+  } finally {
+    clearAccessToken();
+  }
 }
 
-/**
- * Recupera o perfil de quem está com a sessão aberta, usado para reidratar o
- * estado quando a página é recarregada.
- *
- * <p>Devolve `null` em vez de lançar quando não há sessão válida: para quem
- * chama, "não está logado" é uma resposta esperada, não um erro. Um token
- * recusado é descartado aqui mesmo, para não ficar tentando a cada recarga.
- */
-export async function getCurrentUser(): Promise<User | null> {
-  if (!readToken()) return null;
+/** Exchanges the httpOnly refresh cookie for a fresh access token. */
+export async function refreshSession(): Promise<string> {
+  const { data } = await apiClient.post<{ data: { accessToken: string } }>(
+    ENDPOINTS.auth.refresh
+  );
+  setAccessToken(data.data.accessToken);
+  return data.data.accessToken;
+}
 
+/** GET /auth/me — requires a valid access token (call refreshSession first). */
+export async function getCurrentUser(): Promise<User | null> {
   try {
-    const { data } = await apiClient.get<User>(ENDPOINTS.auth.me);
-    return data;
+    const { data } = await apiClient.get<{ data: MePayload }>(
+      ENDPOINTS.auth.me
+    );
+    const payload = data.data;
+    const name =
+      [payload.firstName, payload.lastName].filter(Boolean).join(' ') ||
+      payload.loginEmail.split('@')[0] ||
+      payload.loginEmail;
+    return {
+      id: String(payload.id),
+      name,
+      email: payload.loginEmail,
+      role: ROLE_MAP[payload.userType] ?? 'secretary',
+      active: payload.isActive,
+    };
   } catch {
-    clearToken();
     return null;
   }
 }

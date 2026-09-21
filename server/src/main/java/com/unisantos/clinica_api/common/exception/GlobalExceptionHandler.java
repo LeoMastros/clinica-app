@@ -1,47 +1,129 @@
 package com.unisantos.clinica_api.common.exception;
 
-import java.time.Instant;
-import java.util.LinkedHashMap;
+import com.unisantos.clinica_api.common.dto.ErrorResponse;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-/**
- * Padroniza as respostas de erro da API.
- *
- * <p>Sem isto, a excecao de credencial invalida lancada dentro do controller
- * viraria 500, porque ela nao passa pelo tratamento do filtro do Spring
- * Security.
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(AuthenticationException.class)
-    ProblemDetail credencialInvalida(AuthenticationException excecao) {
-        ProblemDetail problema = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
-        problema.setTitle("Falha na autenticacao");
-        // Mensagem generica de proposito: nao revela se o e-mail existe.
-        problema.setDetail("E-mail ou senha invalidos.");
-        problema.setProperty("timestamp", Instant.now());
-        return problema;
-    }
+  @ExceptionHandler(ResourceNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
+      ResourceNotFoundException ex) {
+    ErrorResponse error =
+        ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.NOT_FOUND.value())
+            .error("Resource Not Found")
+            .message(ex.getMessage())
+            .build();
+    return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+  }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    ProblemDetail dadosInvalidos(MethodArgumentNotValidException excecao) {
-        Map<String, String> campos = new LinkedHashMap<>();
-        excecao.getBindingResult()
-                .getFieldErrors()
-                .forEach(erro -> campos.putIfAbsent(erro.getField(), erro.getDefaultMessage()));
+  @ExceptionHandler(PermissionDeniedException.class)
+  public ResponseEntity<ErrorResponse> handlePermissionDeniedException(
+      PermissionDeniedException ex) {
+    ErrorResponse error =
+        ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.FORBIDDEN.value())
+            .error("Permission Denied")
+            .message(ex.getMessage())
+            .build();
+    return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+  }
 
-        ProblemDetail problema = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-        problema.setTitle("Dados invalidos");
-        problema.setDetail("Verifique os campos informados.");
-        problema.setProperty("fields", campos);
-        problema.setProperty("timestamp", Instant.now());
-        return problema;
-    }
+  @ExceptionHandler(ValidationException.class)
+  public ResponseEntity<ErrorResponse> handleValidationException(ValidationException ex) {
+    ErrorResponse error =
+        ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error("Validation Error")
+            .message(ex.getMessage())
+            .build();
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(
+      MethodArgumentNotValidException ex) {
+    Map<String, String> errors = new HashMap<>();
+    ex.getBindingResult()
+        .getAllErrors()
+        .forEach(
+            error -> {
+              String fieldName = ((FieldError) error).getField();
+              String errorMessage = error.getDefaultMessage();
+              errors.put(fieldName, errorMessage);
+            });
+    ErrorResponse error =
+        ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error("Validation Error")
+            .message("Invalid request parameters")
+            .validationErrors(errors)
+            .build();
+    return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(BadCredentialsException.class)
+  public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex) {
+    ErrorResponse error =
+        ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.UNAUTHORIZED.value())
+            .error("Unauthorized")
+            .message("Invalid email or password")
+            .build();
+    return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+  }
+
+  @ExceptionHandler({DisabledException.class, LockedException.class})
+  public ResponseEntity<ErrorResponse> handleInactiveAccountException(AuthenticationException ex) {
+    ErrorResponse error =
+        ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.FORBIDDEN.value())
+            .error("Account Inactive")
+            .message("Account is not active — contact the coordinator")
+            .build();
+    return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+  }
+
+  @ExceptionHandler(AuthenticationException.class)
+  public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex) {
+    ErrorResponse error =
+        ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.UNAUTHORIZED.value())
+            .error("Unauthorized")
+            .message("Authentication failed")
+            .build();
+    return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+  }
+
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+    ErrorResponse error =
+        ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+            .error("Internal Server Error")
+            .message("An unexpected error occurred")
+            .build();
+    return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
 }

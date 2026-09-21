@@ -55,3 +55,5 @@ tmp/
 .env.test.local
 .env.production.local
 *.pem
+# Configurações locais de desenvolvimento pc do leo (essa porra tem alergia a linux(docker) só consigo rodar no windows mysql) =/
+server/src/main/resources/application-local.properties

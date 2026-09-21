@@ -66,3 +66,6 @@ demo-video/
 client/e2e/test-results/
 client/e2e/playwright-report/
 client/test-results/
+
+
+server/src/main/resources/application-local.properties
